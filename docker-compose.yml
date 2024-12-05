@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  ollama:
+    build:
+      context: ./ollama
+      dockerfile: Dockerfile
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    network_mode: host  # Bind to host network for consistency
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: rag-app
+    depends_on:
+      - ollama
+    network_mode: host  # Use host network for consistency
+    environment:
+      - FAISS_STORE_DIR=/data
+    volumes:
+      - ./data:/data
+

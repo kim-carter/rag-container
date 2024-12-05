@@ -1,0 +1,59 @@
+import requests
+import json
+
+def format_ollama_response(response_json):
+    """
+    Format the JSON response from Ollama into human-readable text.
+    Args:
+        response_json (dict): JSON object containing the response.
+    Returns:
+        str: Formatted text.
+    """
+    # Extract main fields
+    model_name = response_json.get("model", "Unknown model")
+    created_at = response_json.get("created_at", "Unknown timestamp")
+    response_text = response_json.get("response", "").strip()
+    done_reason = response_json.get("done_reason", "Unknown reason")
+    total_duration = response_json.get("total_duration", "Unknown duration")
+    eval_count = response_json.get("eval_count", 0)
+    context_tokens = response_json.get("context", [])
+    
+    # Format context tokens length
+    context_length = len(context_tokens)
+
+    # Build the formatted string
+    formatted_text = (
+        f"Model: {model_name}\n"
+        f"Timestamp: {created_at}\n"
+        f"Response:\n{response_text if response_text else 'No response generated.'}\n"
+        f"Done Reason: {done_reason}\n"
+        f"Total Duration: {total_duration} ns\n"
+        f"Evaluation Count: {eval_count}\n"
+        f"Context Tokens: {context_length} tokens\n"
+    )
+    
+    return formatted_text
+
+def generate_response_with_ollama(query, context, ollama_url, model_name="mistral:7b-instruct-q4_K_M"):
+    data = {
+        "model": "ms7b",
+        "prompt": f"Use the following context to answer the question:\n\nContext:\n{context}\n\nQuestion: {query}",
+    }
+    try:
+        print(f"Sending POST request to {ollama_url}/api/generate with model: {model_name}")
+        response = requests.post(f"{ollama_url}/api/generate", json=data, timeout=10)
+
+        # Log raw response for debugging
+        print(f"Raw response text: {response.text}")
+        print(f"Response status code: {response.status_code}")
+
+        # Safely parse the response
+        try:
+            parsed_response = response.json()
+            print(f"Parsed JSON: {parsed_response}")  # Debugging parsed content
+            return parsed_response.get("response", "No meaningful response generated.")
+        except json.JSONDecodeError as e:
+            return f"Error decoding JSON response: {e}. Raw response: {response.text}"
+
+    except requests.ConnectionError as e:
+        return f"ConnectionError: Unable to reach Ollama. Details: {e}"

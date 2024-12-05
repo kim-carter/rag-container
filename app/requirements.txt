@@ -1,0 +1,6 @@
+
+spacy
+pdfplumber
+sentence-transformers
+faiss-cpu
+requests
